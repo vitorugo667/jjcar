@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Download, TrendingUp, Car, DollarSign } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -22,7 +22,7 @@ export default function RelatoriosPage() {
   const [loading, setLoading] = useState(true)
   const [filtros, setFiltros] = useState({ de: '', ate: '' })
 
-  const carregar = () => {
+  const carregar = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams()
     if (filtros.de) params.set('de', filtros.de)
@@ -32,9 +32,10 @@ export default function RelatoriosPage() {
       .then(setRelatorio)
       .catch(() => {})
       .finally(() => setLoading(false))
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtros.de, filtros.ate])
 
-  useEffect(carregar, [])
+  useEffect(() => { carregar() }, [])
 
   if (!usuario?.permissoes.verFinanceiro) {
     return (
@@ -252,12 +253,3 @@ export default function RelatoriosPage() {
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </>
-      )}
-    </div>
-  )
-}

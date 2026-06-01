@@ -8,7 +8,6 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
-  },
-  "include": ["src"]
-}
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "pa

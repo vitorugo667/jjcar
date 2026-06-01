@@ -1,3 +1,4 @@
 {
-  "installCommand": "cd ../.. && npx pnpm@8 install --no-frozen-lockfile && npx pnpm@8 --filter @jjcar/db exec prisma generate"
-}
+  "buildCommand": "pnpm --filter @jjcar/web build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "pnpm install --no-
