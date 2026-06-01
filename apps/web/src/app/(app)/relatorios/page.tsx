@@ -253,3 +253,12 @@ export default function RelatoriosPage() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}

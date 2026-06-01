@@ -1,4 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Necessário para compilar pacotes workspace que exportam TypeScript direto
   transpilePackages: ['@jjcar/shared'],
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**' },
+    ],
+  },
+}
+
+export default nextConfig

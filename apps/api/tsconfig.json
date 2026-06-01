@@ -10,4 +10,10 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
-    "pa
+    "paths": {
+      "@jjcar/shared": ["../../packages/shared/src/index.ts"],
+      "@jjcar/db": ["../../packages/db/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

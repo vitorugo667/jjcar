@@ -1,4 +1,0 @@
-{
-  "buildCommand": "pnpm --filter @jjcar/web build",
-  "outputDirectory": "apps/web/.next",
-  "installCommand": "pnpm install --no-
