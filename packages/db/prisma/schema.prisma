@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  gerente
+  operador
+  financeiro
+}
+
+enum StatusVeiculo {
+  em_andamento
+  aguardando_aprovacao
+  encerrado
+  cancelado
+}
+
+enum StatusNotaFiscal {
+  pendente
+  emitida
+  cancelada
+  nao_aplicavel
+}
+
+enum TipoServico {
+  servico_interno
+  seguradora
+  outro
+}
+
+enum TipoNotificacao {
+  status_nf
+  veiculo_encerrado
+  orcamento_recebido
+}
+
+model Usuario {
+  id             String   @id @default(uuid())
+  nomeCompleto   String   @map("nome_completo")
+  nomeDeLogin    String   @unique @map("nome_de_login")
+  email          String   @unique
+  senhaHash      String   @map("senha_hash")
+  role           Role     @default(operador)
+  ativo          Boolean  @default(true)
+  verFinanceiro  Boolean  @default(false) @map("ver_financeiro")
+  verFotos       Boolean  @default(true) @map("ver_fotos")
+  registrarVeiculos Boolean @default(true) @map("registrar_veiculos")
+  registrarValorMes Boolean @default(false) @map("registrar_valor_mes")
+  criadoEm      DateTime @default(now()) @map("criado_em")
+  atualizadoEm  DateTime @updatedAt @map("atualizado_em")
+
+  veiculos              Veiculo[]              @relation("VeiculoResponsavel")
+  orcamentosCriados     Orcamento[]
+  lancamentosFinanceiros LancamentoFinanceiro[]
+  notificacoes          Notificacao[]
+
+  @@map("usuarios")
+}
+
+model Veiculo {
+  id                    String           @id @default(uuid())
+  placa                 String
+  nomeVeiculo           String           @map("nome_veiculo")
+  descricaoServico      String?          @map("descricao_servico")
+  tipoServico           TipoServico      @map("tipo_servico")
+  seguradoraCliente     String?          @map("seguradora_cliente")
+  valorServico          Decimal?         @map("valor_servico") @db.Decimal(10, 2)
+  fotos                 String[]
+  status                StatusVeiculo    @default(em_andamento)
+  notaFiscalStatus      StatusNotaFiscal @default(pendente) @map("nota_fiscal_status")
+  notaFiscalNumero      String?          @map("nota_fiscal_numero")
+  usuarioResponsavelId  String           @map("usuario_responsavel_id")
+  usuarioResponsavel    Usuario          @relation("VeiculoResponsavel", fields: [usuarioResponsavelId], references: [id])
+  orcamentoId           String?          @map("orcamento_id")
+  orcamento             Orcamento?       @relation(fields: [orcamentoId], references: [id])
+  criadoEm             DateTime         @default(now()) @map("criado_em")
+  encerradoEm          DateTime?        @map("encerrado_em")
+  atualizadoEm         DateTime         @updatedAt @map("atualizado_em")
+
+  lancamentos  LancamentoFinanceiro[]
+  notificacoes Notificacao[]
+
+  @@map("veiculos")
+}
+
+model Orcamento {
+  id                String      @id @default(uuid())
+  tipo              TipoServico
+  descricao         String
+  arquivoUrl        String?     @map("arquivo_url")
+  valor             Decimal     @db.Decimal(10, 2)
+  seguradoraCliente String?     @map("seguradora_cliente")
+  criadoPorId       String      @map("criado_por_id")
+  criadoPor         Usuario     @relation(fields: [criadoPorId], references: [id])
+  criadoEm         DateTime    @default(now()) @map("criado_em")
+
+  veiculos Veiculo[]
+
+  @@map("orcamentos")
+}
+
+model LancamentoFinanceiro {
+  id                String           @id @default(uuid())
+  data              DateTime         @db.Date
+  usuarioId         String           @map("usuario_id")
+  usuario           Usuario          @relation(fields: [usuarioId], references: [id])
+  veiculoId         String           @map("veiculo_id")
+  veiculo           Veiculo          @relation(fields: [veiculoId], references: [id])
+  placa             String
+  nomeVeiculo       String           @map("nome_veiculo")
+  tipoServico       TipoServico      @map("tipo_servico")
+  seguradoraCliente String?          @map("seguradora_cliente")
+  valor             Decimal          @db.Decimal(10, 2)
+  notaFiscalStatus  StatusNotaFiscal @map("nota_fiscal_status")
+  criadoEm         DateTime         @default(now()) @map("criado_em")
+
+  @@map("lancamentos_financeiros")
+}
+
+model Notificacao {
+  id         String          @id @default(uuid())
+  usuarioId  String          @map("usuario_id")
+  usuario    Usuario         @relation(fields: [usuarioId], references: [id])
+  tipo       TipoNotificacao
+  mensagem   String
+  lida       Boolean         @default(false)
+  veiculoId  String?         @map("veiculo_id")
+  veiculo    Veiculo?        @relation(fields: [veiculoId], references: [id])
+  criadoEm  DateTime        @default(now()) @map("criado_em")
+
+  @@map("notificacoes")
+}

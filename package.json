@@ -1,0 +1,23 @@
+{
+  "name": "jjcar",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "db:migrate": "pnpm --filter @jjcar/db migrate",
+    "db:seed": "pnpm --filter @jjcar/db seed",
+    "db:studio": "pnpm --filter @jjcar/db studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=8"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
