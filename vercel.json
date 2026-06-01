@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npx pnpm@8 install --no-frozen-lockfile && npx pnpm@8 --filter @jjcar/db exec prisma generate && npx pnpm@8 --filter @jjcar/web build",
-  "outputDirectory": "apps/web",
   "framework": "nextjs",
-  "installCommand": "npx pnpm@8 install --no-frozen-lockfile"
+  "installCommand": "echo skip",
+  "buildCommand": "npx pnpm@8 install --no-frozen-lockfile && npx pnpm@8 --filter @jjcar/db exec prisma generate && cd apps/web && npx next build",
+  "outputDirectory": "apps/web/.next"
 }
