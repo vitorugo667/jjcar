@@ -9,6 +9,7 @@ import { veiculosRoutes } from './routes/veiculos'
 import { orcamentosRoutes } from './routes/orcamentos'
 import { relatoriosRoutes } from './routes/relatorios'
 import { notificacoesRoutes } from './routes/notificacoes'
+import { uploadRoutes } from './routes/upload'
 
 const app = Fastify({ logger: true })
 
@@ -30,6 +31,7 @@ app.register(veiculosRoutes, { prefix: '/veiculos' })
 app.register(orcamentosRoutes, { prefix: '/orcamentos' })
 app.register(relatoriosRoutes, { prefix: '/relatorios' })
 app.register(notificacoesRoutes, { prefix: '/notificacoes' })
+app.register(uploadRoutes, { prefix: '/upload' })
 
 app.get('/health', async () => ({ status: 'ok' }))
 
@@ -37,11 +39,4 @@ const start = async () => {
   try {
     const port = Number(process.env.API_PORT) || 3001
     const host = process.env.API_HOST || '0.0.0.0'
-    await app.listen({ port, host })
-  } catch (err) {
-    app.log.error(err)
-    process.exit(1)
-  }
-}
-
-start()
+    await app.li

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Camera, FileText, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Camera, FileText, AlertTriangle } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/Badge'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
+import { FotoUpload } from '@/components/ui/FotoUpload'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 import { formatarData, formatarMoeda, labelTipo } from '@/lib/utils'
@@ -42,7 +43,6 @@ export default function VeiculoDetalhePage() {
     descricaoServico: '',
     valorServico: '',
     fotos: [] as string[],
-    fotoInput: '',
   })
 
   useEffect(() => {
@@ -329,51 +329,13 @@ export default function VeiculoDetalhePage() {
 
           <div>
             <p className="text-sm font-medium text-gray-300 mb-2">
-              Fotos ({encerrarForm.fotos.length}) — mínimo 3 *
+              Fotos — mínimo 3 *
             </p>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="url"
-                placeholder="https://..."
-                value={encerrarForm.fotoInput}
-                onChange={(e) => setEncerrarForm({ ...encerrarForm, fotoInput: e.target.value })}
-                className="flex-1 bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (encerrarForm.fotoInput.startsWith('http')) {
-                    setEncerrarForm({
-                      ...encerrarForm,
-                      fotos: [...encerrarForm.fotos, encerrarForm.fotoInput],
-                      fotoInput: '',
-                    })
-                  }
-                }}
-              >
-                +
-              </Button>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {encerrarForm.fotos.map((url, idx) => (
-                <div key={idx} className="relative aspect-video bg-gray-700 rounded overflow-hidden">
-                  <img src={url} className="w-full h-full object-cover" />
-                  <button
-                    onClick={() =>
-                      setEncerrarForm({
-                        ...encerrarForm,
-                        fotos: encerrarForm.fotos.filter((_, i) => i !== idx),
-                      })
-                    }
-                    className="absolute top-0.5 right-0.5 bg-red-600 text-white rounded p-0.5"
-                  >
-                    <XCircle size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <FotoUpload
+              fotos={encerrarForm.fotos}
+              onChange={(fotos) => setEncerrarForm({ ...encerrarForm, fotos })}
+              max={10}
+            />
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -389,3 +351,4 @@ export default function VeiculoDetalhePage() {
     </>
   )
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
