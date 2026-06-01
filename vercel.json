@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npx pnpm@8 install --no-frozen-lockfile && npx pnpm@8 --filter @jjcar/web build",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs",
+  "installCommand": "npx pnpm@8 install --no-frozen-lockfile"
+}
