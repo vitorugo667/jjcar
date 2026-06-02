@@ -194,8 +194,6 @@ export function validarEncerramento(veiculo: {
   const fotosValidas = (veiculo.fotos ?? []).filter(
     (f) => f && f.startsWith('http'),
   )
-  if (fotosValidas.length < 3)
-    erros.push(`Mínimo 3 fotos obrigatórias. Enviadas: ${fotosValidas.length}`)
 
   return erros.length > 0 ? { sucesso: false, erros } : null
 }

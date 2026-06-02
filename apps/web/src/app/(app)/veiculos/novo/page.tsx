@@ -157,7 +157,7 @@ export default function NovoVeiculoPage() {
 
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-3">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
-              Fotos {fotos.length < 3 && <span className="text-orange-400">— mínimo 3 para encerrar</span>}
+              Fotos
             </h2>
             <FotoUpload fotos={fotos} onChange={setFotos} max={10} />
           </div>

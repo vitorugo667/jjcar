@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Car, FileText, Users, BarChart3, Wrench } from 'lucide-react'
+import { LayoutDashboard, Car, FileText, Users, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -26,12 +26,8 @@ export function Sidebar() {
 
   return (
     <aside className="w-60 bg-gray-900 border-r border-gray-700 flex flex-col min-h-screen">
-      <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center gap-2">
-          <Wrench className="text-orange-500" size={24} />
-          <span className="text-xl font-bold text-gray-100">JJCAR</span>
-        </div>
-        <p className="text-xs text-gray-500 mt-1">Sistema de Gestão</p>
+      <div className="flex items-center justify-center py-5 border-b border-gray-700 bg-black">
+        <img src="/logo.png" alt="JJ CAR" className="h-20 w-auto" />
       </div>
 
       <nav className="flex-1 p-4 space-y-1">

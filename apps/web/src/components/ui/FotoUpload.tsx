@@ -111,7 +111,6 @@ export function FotoUpload({ fotos, onChange, max = 10, className }: FotoUploadP
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         multiple
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}

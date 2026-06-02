@@ -329,7 +329,7 @@ export default function VeiculoDetalhePage() {
 
           <div>
             <p className="text-sm font-medium text-gray-300 mb-2">
-              Fotos — mínimo 3 *
+              Fotos
             </p>
             <FotoUpload
               fotos={encerrarForm.fotos}
