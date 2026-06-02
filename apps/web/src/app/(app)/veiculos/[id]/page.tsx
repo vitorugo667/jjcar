@@ -308,21 +308,20 @@ export default function VeiculoDetalhePage() {
           </p>
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-300">Descrição do serviço *</label>
+            <label className="text-sm font-medium text-gray-300">Descrição do serviço</label>
             <textarea
               rows={3}
               value={encerrarForm.descricaoServico}
               onChange={(e) => setEncerrarForm({ ...encerrarForm, descricaoServico: e.target.value })}
               className="bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
             />
-            <p className="text-xs text-gray-500">{encerrarForm.descricaoServico.length} caracteres (mín. 20)</p>
           </div>
 
           <Input
-            label="Valor do serviço (R$) *"
+            label="Valor do serviço (R$)"
             type="number"
             step="0.01"
-            min="0.01"
+            min="0"
             value={encerrarForm.valorServico}
             onChange={(e) => setEncerrarForm({ ...encerrarForm, valorServico: e.target.value })}
           />

@@ -16,9 +16,9 @@ const criarVeiculoSchema = z.object({
 })
 
 const encerrarVeiculoSchema = z.object({
-  descricaoServico: z.string(),
-  valorServico: z.number(),
-  fotos: z.array(z.string()),
+  descricaoServico: z.string().optional().default(''),
+  valorServico: z.number().optional().default(0),
+  fotos: z.array(z.string()).optional().default([]),
 })
 
 const notaFiscalSchema = z.object({

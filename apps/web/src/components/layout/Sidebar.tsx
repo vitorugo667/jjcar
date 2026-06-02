@@ -26,8 +26,8 @@ export function Sidebar() {
 
   return (
     <aside className="w-60 bg-gray-900 border-r border-gray-700 flex flex-col min-h-screen">
-      <div className="flex items-center justify-center py-5 border-b border-gray-700 bg-black">
-        <img src="/logo.png" alt="JJ CAR" className="h-20 w-auto" />
+      <div className="flex items-center justify-center py-4 border-b border-gray-700" style={{ backgroundColor: '#000' }}>
+        <img src="/logo.png" alt="JJ CAR" className="h-20 w-auto object-contain" />
       </div>
 
       <nav className="flex-1 p-4 space-y-1">

@@ -186,10 +186,6 @@ export function validarEncerramento(veiculo: {
 
   if (!veiculo.placa) erros.push('Placa é obrigatória')
   if (!veiculo.nomeVeiculo) erros.push('Nome do veículo é obrigatório')
-  if (!veiculo.descricaoServico || veiculo.descricaoServico.length < 20)
-    erros.push('Descrição do serviço deve ter ao menos 20 caracteres')
-  if (!veiculo.valorServico || veiculo.valorServico <= 0)
-    erros.push('Valor do serviço deve ser maior que zero')
 
   const fotosValidas = (veiculo.fotos ?? []).filter(
     (f) => f && f.startsWith('http'),
