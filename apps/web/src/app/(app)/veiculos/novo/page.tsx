@@ -139,7 +139,7 @@ export default function NovoVeiculoPage() {
               <label className="text-sm font-medium text-gray-300">Descrição do serviço</label>
               <textarea
                 rows={4}
-                placeholder="Descreva o serviço a ser realizado (mínimo 20 caracteres para encerrar)"
+                placeholder="Descreva o serviço a ser realizado"
                 value={form.descricaoServico}
                 onChange={(e) => setForm({ ...form, descricaoServico: e.target.value })}
                 className="bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
