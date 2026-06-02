@@ -37,10 +37,14 @@ app.get('/health', async () => ({ status: 'ok' }))
 
 const start = async () => {
   try {
-    const port = Number(process.env.API_PORT) || 3001
+    // Render injeta PORT automaticamente; API_PORT é fallback local
+    const port = Number(process.env.PORT) || Number(process.env.API_PORT) || 3001
     const host = process.env.API_HOST || '0.0.0.0'
+    console.log(`[startup] iniciando servidor na porta ${port}...`)
     await app.listen({ port, host })
+    console.log(`[startup] servidor ouvindo em ${host}:${port}`)
   } catch (err) {
+    console.error('[startup] ERRO ao iniciar servidor:', err)
     app.log.error(err)
     process.exit(1)
   }
