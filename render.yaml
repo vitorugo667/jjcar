@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: .
     buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @jjcar/db generate
-    startCommand: pnpm --filter @jjcar/db migrate:deploy && pnpm --filter @jjcar/api start
+    startCommand: pnpm --filter @jjcar/api start
     envVars:
       - key: NODE_ENV
         value: production
