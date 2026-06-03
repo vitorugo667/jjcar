@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Camera, FileText, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Camera, FileText, AlertTriangle, Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/Badge'
@@ -35,6 +35,8 @@ export default function VeiculoDetalhePage() {
   const [loading, setLoading] = useState(true)
   const [modalNF, setModalNF] = useState(false)
   const [modalEncerrar, setModalEncerrar] = useState(false)
+  const [modalExcluir, setModalExcluir] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
   const [nfStatus, setNfStatus] = useState('')
   const [nfNumero, setNfNumero] = useState('')
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null)
@@ -113,6 +115,18 @@ export default function VeiculoDetalhePage() {
     }
   }
 
+  async function handleExcluir() {
+    setExcluindo(true)
+    try {
+      await api.delete(`/veiculos/${id}`)
+      toast('sucesso', 'Serviço excluído com sucesso!')
+      setTimeout(() => router.push('/veiculos'), 800)
+    } catch {
+      toast('erro', 'Erro ao excluir serviço')
+      setExcluindo(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -157,6 +171,15 @@ export default function VeiculoDetalhePage() {
           </div>
           <div className="flex items-center gap-2">
             <Badge status={veiculo.status} />
+            {usuario?.role === 'admin' && (
+              <button
+                onClick={() => setModalExcluir(true)}
+                className="ml-2 p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition"
+                title="Excluir serviço"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -343,6 +366,33 @@ export default function VeiculoDetalhePage() {
             </Button>
             <Button variant="danger" className="flex-1" onClick={handleEncerrar}>
               Confirmar Encerramento
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Confirmar exclusão */}
+      <Modal aberto={modalExcluir} onFechar={() => setModalExcluir(false)} titulo="Excluir serviço">
+        <div className="space-y-4">
+          <div className="bg-red-900/30 border border-red-800 rounded-xl p-4 flex items-start gap-3">
+            <Trash2 size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-red-200">Esta ação não pode ser desfeita</p>
+              <p className="text-xs text-red-400 mt-1">
+                O serviço <span className="font-mono font-bold">{veiculo?.placa}</span> — {veiculo?.nomeVeiculo} será excluído permanentemente.
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-400">
+            Tem certeza que deseja excluir este serviço? Todos os dados associados serão removidos.
+          </p>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setModalExcluir(false)} disabled={excluindo}>
+              Cancelar
+            </Button>
+            <Button variant="danger" className="flex-1" onClick={handleExcluir} loading={excluindo}>
+              <Trash2 size={15} />
+              Excluir serviço
             </Button>
           </div>
         </div>
