@@ -34,19 +34,37 @@ export async function uploadRoutes(app: FastifyInstance) {
 
     const uploadUrl = `${storageUrl}/object/${bucket}/${filename}`
 
-    const res = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${storageKey}`,
-        'Content-Type': data.mimetype,
-        'x-upsert': 'true',
-      },
-      body: buffer,
-    })
+    // Timeout de 30s para não deixar a requisição travada indefinidamente
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 30000)
+
+    let res: Response
+    try {
+      res = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${storageKey}`,
+          'Content-Type': data.mimetype,
+          'x-upsert': 'true',
+        },
+        body: buffer,
+        signal: controller.signal,
+      })
+    } catch (e: any) {
+      clearTimeout(timeout)
+      app.log.error({ uploadError: e?.message }, 'Erro de rede no upload para Supabase')
+      return reply.status(504).send({ erro: 'O envio da foto demorou demais. Tente novamente.' })
+    }
+    clearTimeout(timeout)
 
     if (!res.ok) {
       const err = await res.text().catch(() => 'unknown')
-      app.log.error({ uploadError: err }, 'Falha no upload para Supabase Storage')
+      app.log.error({ uploadError: err, status: res.status, bucket }, 'Falha no upload para Supabase Storage')
+      if (res.status === 404 || res.status === 400) {
+        return reply.status(500).send({
+          erro: `Bucket de fotos "${bucket}" não encontrado no servidor. Verifique a configuração STORAGE_BUCKET.`,
+        })
+      }
       return reply.status(500).send({ erro: 'Falha ao fazer upload da foto' })
     }
 
