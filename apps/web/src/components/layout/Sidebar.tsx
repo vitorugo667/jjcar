@@ -2,16 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Car, FileText, Users, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, Car, FileText, Users, BarChart3, DatabaseBackup } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
+import type { Role } from '@jjcar/shared'
 
-const navItems = [
+const navItems: {
+  href: string
+  label: string
+  icon: any
+  rolesAllowed?: Role[]
+  permRequired?: 'verFinanceiro'
+}[] = [
   { href: '/dashboard', label: 'Painel', icon: LayoutDashboard },
   { href: '/veiculos', label: 'Veículos', icon: Car },
-  { href: '/orcamentos', label: 'Orçamentos', icon: FileText, roleRequired: 'admin' as const },
-  { href: '/usuarios', label: 'Usuários', icon: Users, roleRequired: 'admin' as const },
-  { href: '/relatorios', label: 'Relatórios', icon: BarChart3, permRequired: 'verFinanceiro' as const },
+  { href: '/orcamentos', label: 'Orçamentos', icon: FileText, rolesAllowed: ['admin'] },
+  { href: '/usuarios', label: 'Usuários', icon: Users, rolesAllowed: ['admin'] },
+  { href: '/relatorios', label: 'Relatórios', icon: BarChart3, permRequired: 'verFinanceiro' },
+  { href: '/backup', label: 'Backup', icon: DatabaseBackup, rolesAllowed: ['admin', 'financeiro'] },
 ]
 
 export function Sidebar() {
@@ -19,7 +27,7 @@ export function Sidebar() {
   const { usuario } = useAuth()
 
   const itensVisiveis = navItems.filter((item) => {
-    if (item.roleRequired && usuario?.role !== item.roleRequired) return false
+    if (item.rolesAllowed && !item.rolesAllowed.includes(usuario?.role as Role)) return false
     if (item.permRequired && !usuario?.permissoes[item.permRequired]) return false
     return true
   })

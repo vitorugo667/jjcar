@@ -10,6 +10,7 @@ import { orcamentosRoutes } from './routes/orcamentos'
 import { relatoriosRoutes } from './routes/relatorios'
 import { notificacoesRoutes } from './routes/notificacoes'
 import { uploadRoutes } from './routes/upload'
+import { backupRoutes } from './routes/backup'
 
 const app = Fastify({ logger: true })
 
@@ -32,6 +33,7 @@ app.register(orcamentosRoutes, { prefix: '/orcamentos' })
 app.register(relatoriosRoutes, { prefix: '/relatorios' })
 app.register(notificacoesRoutes, { prefix: '/notificacoes' })
 app.register(uploadRoutes, { prefix: '/upload' })
+app.register(backupRoutes, { prefix: '/backup' })
 
 app.get('/health', async () => ({ status: 'ok' }))
 
