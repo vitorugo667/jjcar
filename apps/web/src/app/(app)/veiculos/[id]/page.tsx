@@ -335,7 +335,9 @@ export default function VeiculoDetalhePage() {
             <div>
               <p className="text-sm font-medium text-red-200">Tem certeza?</p>
               <p className="text-sm text-red-300 mt-1">
-                O veículo <strong>{veiculo.placa} — {veiculo.nomeVeiculo}</strong> será marcado como cancelado. Esta ação não pode ser desfeita.
+                O veículo <strong>{veiculo.placa} — {veiculo.nomeVeiculo}</strong> será marcado como cancelado
+                {veiculo.status === 'encerrado' && ' e o lançamento financeiro dele será removido dos relatórios'}.
+                Esta ação não pode ser desfeita.
               </p>
             </div>
           </div>
