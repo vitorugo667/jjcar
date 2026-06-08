@@ -42,7 +42,12 @@ export async function veiculosRoutes(app: FastifyInstance) {
     }
 
     const where: any = {}
-    if (status) where.status = status
+    if (status) {
+      where.status = status
+    } else {
+      // Por padrão, veículos cancelados não aparecem na listagem
+      where.status = { not: 'cancelado' }
+    }
     if (placa) where.placa = { contains: placa, mode: 'insensitive' }
 
     // Operadores só veem seus próprios veículos
@@ -108,17 +113,10 @@ export async function veiculosRoutes(app: FastifyInstance) {
     return reply.status(201).send(veiculo)
   })
 
-  app.patch('/:id', { preHandler: autenticar }, async (req, reply) => {
+  app.patch('/:id', { preHandler: exigirRole('admin') }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const veiculo = await prisma.veiculo.findUnique({ where: { id } })
     if (!veiculo) return reply.status(404).send({ erro: 'Veículo não encontrado' })
-
-    const podeEditar =
-      req.usuario.role === 'admin' ||
-      req.usuario.role === 'gerente' ||
-      veiculo.usuarioResponsavelId === req.usuario.sub
-
-    if (!podeEditar) return reply.status(403).send({ erro: 'Sem permissão' })
 
     const body = criarVeiculoSchema.partial().safeParse(req.body)
     if (!body.success) {

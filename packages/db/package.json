@@ -9,6 +9,7 @@
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "ts-node src/seed.ts",
+    "reset": "ts-node src/reset.ts",
     "studio": "prisma studio",
     "generate": "prisma generate"
   },

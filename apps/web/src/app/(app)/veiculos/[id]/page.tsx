@@ -92,9 +92,8 @@ export default function VeiculoDetalhePage() {
     veiculo?.status === 'em_andamento' &&
     (usuario?.role === 'admin' || usuario?.role === 'gerente' || veiculo.usuarioResponsavel.id === usuario?.id)
 
-  const podeEditar =
-    veiculo?.status === 'em_andamento' &&
-    (usuario?.role === 'admin' || usuario?.role === 'gerente' || veiculo?.usuarioResponsavel.id === usuario?.id)
+  // Apenas admin pode editar e cancelar
+  const podeEditar = veiculo?.status === 'em_andamento' && usuario?.role === 'admin'
 
   const podeEditarNF = usuario?.role === 'admin' || usuario?.role === 'financeiro'
   const podeRemover = usuario?.role === 'admin'

@@ -17,7 +17,6 @@ const statusOpcoes = [
   { value: 'em_andamento', label: 'Em andamento' },
   { value: 'aguardando_aprovacao', label: 'Aguardando aprovação' },
   { value: 'encerrado', label: 'Encerrado' },
-  { value: 'cancelado', label: 'Cancelado' },
 ]
 
 export default function VeiculosPage() {
