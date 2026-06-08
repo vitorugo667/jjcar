@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Camera, FileText, AlertTriangle, Trash2 } from 'lucide-react'
+import { ArrowLeft, Camera, FileText, AlertTriangle, Pencil, Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/Badge'
@@ -25,6 +25,12 @@ const nfOpcoes = [
   { value: 'nao_aplicavel', label: 'Não aplicável' },
 ]
 
+const tipoOpcoes = [
+  { value: 'seguradora', label: 'Seguradora' },
+  { value: 'servico_interno', label: 'Serviço Interno' },
+  { value: 'outro', label: 'Outro' },
+]
+
 export default function VeiculoDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -35,16 +41,26 @@ export default function VeiculoDetalhePage() {
   const [loading, setLoading] = useState(true)
   const [modalNF, setModalNF] = useState(false)
   const [modalEncerrar, setModalEncerrar] = useState(false)
-  const [modalExcluir, setModalExcluir] = useState(false)
-  const [excluindo, setExcluindo] = useState(false)
+  const [modalEditar, setModalEditar] = useState(false)
+  const [modalCancelar, setModalCancelar] = useState(false)
   const [nfStatus, setNfStatus] = useState('')
   const [nfNumero, setNfNumero] = useState('')
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null)
+  const [salvando, setSalvando] = useState(false)
 
   const [encerrarForm, setEncerrarForm] = useState({
     descricaoServico: '',
     valorServico: '',
     fotos: [] as string[],
+  })
+
+  const [editarForm, setEditarForm] = useState({
+    placa: '',
+    nomeVeiculo: '',
+    tipoServico: 'seguradora',
+    seguradoraCliente: '',
+    valorServico: '',
+    descricaoServico: '',
   })
 
   useEffect(() => {
@@ -57,6 +73,14 @@ export default function VeiculoDetalhePage() {
           valorServico: v.valorServico ? String(v.valorServico) : '',
           fotos: v.fotos,
         }))
+        setEditarForm({
+          placa: v.placa,
+          nomeVeiculo: v.nomeVeiculo,
+          tipoServico: v.tipoServico,
+          seguradoraCliente: v.seguradoraCliente || '',
+          valorServico: v.valorServico ? String(v.valorServico) : '',
+          descricaoServico: v.descricaoServico || '',
+        })
         setNfStatus(v.notaFiscalStatus)
         setNfNumero(v.notaFiscalNumero || '')
       })
@@ -65,13 +89,15 @@ export default function VeiculoDetalhePage() {
   }, [id])
 
   const podeEncerrar =
-    veiculo &&
-    veiculo.status === 'em_andamento' &&
-    (usuario?.role === 'admin' ||
-      usuario?.role === 'gerente' ||
-      veiculo.usuarioResponsavel.id === usuario?.id)
+    veiculo?.status === 'em_andamento' &&
+    (usuario?.role === 'admin' || usuario?.role === 'gerente' || veiculo.usuarioResponsavel.id === usuario?.id)
+
+  const podeEditar =
+    veiculo?.status === 'em_andamento' &&
+    (usuario?.role === 'admin' || usuario?.role === 'gerente' || veiculo?.usuarioResponsavel.id === usuario?.id)
 
   const podeEditarNF = usuario?.role === 'admin' || usuario?.role === 'financeiro'
+  const podeRemover = usuario?.role === 'admin'
 
   async function handleEncerrar() {
     const erros = validarEncerramento({
@@ -81,11 +107,7 @@ export default function VeiculoDetalhePage() {
       valorServico: Number(encerrarForm.valorServico),
       fotos: encerrarForm.fotos,
     })
-
-    if (erros) {
-      toast('erro', erros.erros.join(' | '))
-      return
-    }
+    if (erros) { toast('erro', erros.erros.join(' | ')); return }
 
     try {
       const atualizado = await api.patch<VeiculoPublico>(`/veiculos/${id}/encerrar`, {
@@ -101,6 +123,40 @@ export default function VeiculoDetalhePage() {
     }
   }
 
+  async function handleEditar() {
+    setSalvando(true)
+    try {
+      const atualizado = await api.patch<VeiculoPublico>(`/veiculos/${id}`, {
+        placa: editarForm.placa.toUpperCase(),
+        nomeVeiculo: editarForm.nomeVeiculo,
+        tipoServico: editarForm.tipoServico,
+        seguradoraCliente: editarForm.seguradoraCliente || undefined,
+        valorServico: editarForm.valorServico ? Number(editarForm.valorServico) : undefined,
+        descricaoServico: editarForm.descricaoServico || undefined,
+      })
+      setVeiculo(atualizado)
+      setModalEditar(false)
+      toast('sucesso', 'Veículo atualizado!')
+    } catch (err: any) {
+      toast('erro', err.erro || 'Erro ao salvar')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function handleCancelarServico() {
+    setSalvando(true)
+    try {
+      await api.delete(`/veiculos/${id}`)
+      toast('sucesso', 'Serviço cancelado.')
+      setTimeout(() => router.push('/veiculos'), 1000)
+    } catch (err: any) {
+      toast('erro', err.erro || 'Erro ao cancelar')
+      setSalvando(false)
+      setModalCancelar(false)
+    }
+  }
+
   async function handleAtualizarNF() {
     try {
       const atualizado = await api.patch<VeiculoPublico>(`/veiculos/${id}/nota-fiscal`, {
@@ -112,18 +168,6 @@ export default function VeiculoDetalhePage() {
       toast('sucesso', 'Nota fiscal atualizada!')
     } catch {
       toast('erro', 'Erro ao atualizar nota fiscal')
-    }
-  }
-
-  async function handleExcluir() {
-    setExcluindo(true)
-    try {
-      await api.delete(`/veiculos/${id}`)
-      toast('sucesso', 'Serviço excluído com sucesso!')
-      setTimeout(() => router.push('/veiculos'), 800)
-    } catch {
-      toast('erro', 'Erro ao excluir serviço')
-      setExcluindo(false)
     }
   }
 
@@ -142,12 +186,8 @@ export default function VeiculoDetalhePage() {
     <>
       <ToastContainer toasts={toasts} remover={remover} />
 
-      {/* Foto ampliada */}
       {fotoAmpliada && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-          onClick={() => setFotoAmpliada(null)}
-        >
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setFotoAmpliada(null)}>
           <img src={fotoAmpliada} alt="Foto ampliada" className="max-w-full max-h-full rounded-xl" />
         </div>
       )}
@@ -171,13 +211,14 @@ export default function VeiculoDetalhePage() {
           </div>
           <div className="flex items-center gap-2">
             <Badge status={veiculo.status} />
-            {usuario?.role === 'admin' && (
-              <button
-                onClick={() => setModalExcluir(true)}
-                className="ml-2 p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition"
-                title="Excluir serviço"
-              >
-                <Trash2 size={18} />
+            {podeEditar && (
+              <button onClick={() => setModalEditar(true)} className="p-2 rounded-lg text-gray-400 hover:text-orange-400 hover:bg-gray-800 transition" title="Editar">
+                <Pencil size={16} />
+              </button>
+            )}
+            {podeRemover && veiculo.status !== 'cancelado' && (
+              <button onClick={() => setModalCancelar(true)} className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-gray-800 transition" title="Cancelar serviço">
+                <Trash2 size={16} />
               </button>
             )}
           </div>
@@ -187,16 +228,11 @@ export default function VeiculoDetalhePage() {
         {veiculo.fotos.length > 0 && (
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4 flex items-center gap-2">
-              <Camera size={16} />
-              Fotos ({veiculo.fotos.length})
+              <Camera size={16} /> Fotos ({veiculo.fotos.length})
             </h2>
             <div className="grid grid-cols-3 gap-3">
               {veiculo.fotos.map((url, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setFotoAmpliada(url)}
-                  className="aspect-video bg-gray-700 rounded-lg overflow-hidden hover:ring-2 hover:ring-orange-500 transition"
-                >
+                <button key={idx} onClick={() => setFotoAmpliada(url)} className="aspect-video bg-gray-700 rounded-lg overflow-hidden hover:ring-2 hover:ring-orange-500 transition">
                   <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
                 </button>
               ))}
@@ -207,48 +243,22 @@ export default function VeiculoDetalhePage() {
         {/* Detalhes */}
         <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-4">
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Detalhes do serviço</h2>
-
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-gray-500">Tipo</p>
-              <p className="text-gray-100 font-medium">{labelTipo(veiculo.tipoServico)}</p>
-            </div>
-            {veiculo.seguradoraCliente && (
-              <div>
-                <p className="text-gray-500">Seguradora / Cliente</p>
-                <p className="text-gray-100 font-medium">{veiculo.seguradoraCliente}</p>
-              </div>
-            )}
-            {veiculo.valorServico && (
-              <div>
-                <p className="text-gray-500">Valor</p>
-                <p className="text-gray-100 font-medium text-lg">{formatarMoeda(veiculo.valorServico)}</p>
-              </div>
-            )}
-            {veiculo.encerradoEm && (
-              <div>
-                <p className="text-gray-500">Encerrado em</p>
-                <p className="text-gray-100 font-medium">{formatarData(veiculo.encerradoEm)}</p>
-              </div>
-            )}
+            <div><p className="text-gray-500">Tipo</p><p className="text-gray-100 font-medium">{labelTipo(veiculo.tipoServico)}</p></div>
+            {veiculo.seguradoraCliente && <div><p className="text-gray-500">Seguradora / Cliente</p><p className="text-gray-100 font-medium">{veiculo.seguradoraCliente}</p></div>}
+            {veiculo.valorServico && <div><p className="text-gray-500">Valor</p><p className="text-gray-100 font-medium text-lg">{formatarMoeda(veiculo.valorServico)}</p></div>}
+            {veiculo.encerradoEm && <div><p className="text-gray-500">Encerrado em</p><p className="text-gray-100 font-medium">{formatarData(veiculo.encerradoEm)}</p></div>}
           </div>
-
           {veiculo.descricaoServico && (
-            <div>
-              <p className="text-gray-500 text-sm mb-1">Descrição</p>
-              <p className="text-gray-200 text-sm leading-relaxed">{veiculo.descricaoServico}</p>
-            </div>
+            <div><p className="text-gray-500 text-sm mb-1">Descrição</p><p className="text-gray-200 text-sm leading-relaxed">{veiculo.descricaoServico}</p></div>
           )}
-
           {veiculo.orcamento && (
             <div className="bg-gray-700/50 rounded-lg p-3">
               <p className="text-gray-500 text-xs mb-1">Orçamento vinculado</p>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-200">{veiculo.orcamento.descricao}</p>
                 {veiculo.orcamento.arquivoUrl && (
-                  <a href={veiculo.orcamento.arquivoUrl} target="_blank" rel="noreferrer" className="text-xs text-orange-400 hover:underline">
-                    Ver arquivo →
-                  </a>
+                  <a href={veiculo.orcamento.arquivoUrl} target="_blank" rel="noreferrer" className="text-xs text-orange-400 hover:underline">Ver arquivo →</a>
                 )}
               </div>
             </div>
@@ -259,23 +269,16 @@ export default function VeiculoDetalhePage() {
         <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-2">
-              <FileText size={16} />
-              Nota Fiscal
+              <FileText size={16} /> Nota Fiscal
             </h2>
             {podeEditarNF && veiculo.status === 'encerrado' && (
-              <Button size="sm" variant="outline" onClick={() => setModalNF(true)}>
-                Atualizar NF
-              </Button>
+              <Button size="sm" variant="outline" onClick={() => setModalNF(true)}>Atualizar NF</Button>
             )}
           </div>
-
           <div className="flex items-center gap-3">
             <Badge status={veiculo.notaFiscalStatus} />
-            {veiculo.notaFiscalNumero && (
-              <span className="text-sm text-gray-400">Nº {veiculo.notaFiscalNumero}</span>
-            )}
+            {veiculo.notaFiscalNumero && <span className="text-sm text-gray-400">Nº {veiculo.notaFiscalNumero}</span>}
           </div>
-
           {veiculo.status === 'encerrado' && veiculo.notaFiscalStatus === 'pendente' && podeEditarNF && (
             <div className="mt-3 bg-orange-900/30 border border-orange-700 rounded-lg p-3 flex items-center gap-2">
               <AlertTriangle size={16} className="text-orange-400" />
@@ -284,116 +287,83 @@ export default function VeiculoDetalhePage() {
           )}
         </div>
 
-        {/* Ações */}
         {podeEncerrar && (
-          <Button onClick={() => setModalEncerrar(true)} size="lg" className="w-full">
-            Encerrar Veículo
-          </Button>
+          <Button onClick={() => setModalEncerrar(true)} size="lg" className="w-full">Encerrar Veículo</Button>
         )}
       </div>
 
       {/* Modal: Atualizar NF */}
       <Modal aberto={modalNF} onFechar={() => setModalNF(false)} titulo="Atualizar Nota Fiscal">
         <div className="space-y-4">
-          <Select
-            label="Status da nota fiscal"
-            options={nfOpcoes}
-            value={nfStatus}
-            onChange={(e) => setNfStatus(e.target.value)}
-          />
-          <Input
-            label="Número da NF (opcional)"
-            placeholder="NF-12345"
-            value={nfNumero}
-            onChange={(e) => setNfNumero(e.target.value)}
-          />
+          <Select label="Status da nota fiscal" options={nfOpcoes} value={nfStatus} onChange={(e) => setNfStatus(e.target.value)} />
+          <Input label="Número da NF (opcional)" placeholder="NF-12345" value={nfNumero} onChange={(e) => setNfNumero(e.target.value)} />
           <div className="flex gap-3 pt-2">
-            <Button variant="outline" className="flex-1" onClick={() => setModalNF(false)}>
-              Cancelar
-            </Button>
-            <Button className="flex-1" onClick={handleAtualizarNF}>
-              Salvar
-            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setModalNF(false)}>Cancelar</Button>
+            <Button className="flex-1" onClick={handleAtualizarNF}>Salvar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Editar veículo */}
+      <Modal aberto={modalEditar} onFechar={() => setModalEditar(false)} titulo="Editar Veículo" className="max-w-xl">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-400">Altere os dados do veículo em andamento.</p>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Placa *" value={editarForm.placa} onChange={(e) => setEditarForm({ ...editarForm, placa: e.target.value.toUpperCase() })} />
+            <Input label="Nome do veículo *" value={editarForm.nomeVeiculo} onChange={(e) => setEditarForm({ ...editarForm, nomeVeiculo: e.target.value })} />
+          </div>
+          <Select label="Tipo de serviço" options={tipoOpcoes} value={editarForm.tipoServico} onChange={(e) => setEditarForm({ ...editarForm, tipoServico: e.target.value })} />
+          <Input label="Seguradora / Cliente" placeholder="Ex: Porto Seguro, João Silva..." value={editarForm.seguradoraCliente} onChange={(e) => setEditarForm({ ...editarForm, seguradoraCliente: e.target.value })} />
+          <Input label="Valor do serviço (R$)" type="number" step="0.01" value={editarForm.valorServico} onChange={(e) => setEditarForm({ ...editarForm, valorServico: e.target.value })} />
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-300">Descrição do serviço</label>
+            <textarea rows={3} value={editarForm.descricaoServico} onChange={(e) => setEditarForm({ ...editarForm, descricaoServico: e.target.value })}
+              className="bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setModalEditar(false)}>Cancelar</Button>
+            <Button className="flex-1" loading={salvando} onClick={handleEditar}>Salvar alterações</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Cancelar serviço */}
+      <Modal aberto={modalCancelar} onFechar={() => setModalCancelar(false)} titulo="Cancelar Serviço">
+        <div className="space-y-4">
+          <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 flex gap-3">
+            <AlertTriangle size={20} className="text-red-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-red-200">Tem certeza?</p>
+              <p className="text-sm text-red-300 mt-1">
+                O veículo <strong>{veiculo.placa} — {veiculo.nomeVeiculo}</strong> será marcado como cancelado. Esta ação não pode ser desfeita.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setModalCancelar(false)}>Voltar</Button>
+            <Button variant="danger" className="flex-1" loading={salvando} onClick={handleCancelarServico}>Confirmar cancelamento</Button>
           </div>
         </div>
       </Modal>
 
       {/* Modal: Encerrar veículo */}
-      <Modal
-        aberto={modalEncerrar}
-        onFechar={() => setModalEncerrar(false)}
-        titulo="Encerrar Veículo"
-        className="max-w-xl"
-      >
+      <Modal aberto={modalEncerrar} onFechar={() => setModalEncerrar(false)} titulo="Encerrar Veículo" className="max-w-xl">
         <div className="space-y-4">
-          <p className="text-sm text-gray-400">
-            Confirme os dados abaixo. Após encerrar, será criado um lançamento financeiro automaticamente.
-          </p>
-
+          <p className="text-sm text-gray-400">Confirme os dados abaixo. Após encerrar, será criado um lançamento financeiro automaticamente.</p>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-300">Descrição do serviço</label>
-            <textarea
-              rows={3}
-              value={encerrarForm.descricaoServico}
-              onChange={(e) => setEncerrarForm({ ...encerrarForm, descricaoServico: e.target.value })}
-              className="bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
-            />
+            <textarea rows={3} value={encerrarForm.descricaoServico} onChange={(e) => setEncerrarForm({ ...encerrarForm, descricaoServico: e.target.value })}
+              className="bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
           </div>
-
-          <Input
-            label="Valor do serviço (R$)"
-            type="number"
-            step="0.01"
-            min="0"
-            value={encerrarForm.valorServico}
-            onChange={(e) => setEncerrarForm({ ...encerrarForm, valorServico: e.target.value })}
-          />
-
+          <Input label="Valor do serviço (R$) *" type="number" step="0.01" min="0" value={encerrarForm.valorServico}
+            onChange={(e) => setEncerrarForm({ ...encerrarForm, valorServico: e.target.value })} />
           <div>
-            <p className="text-sm font-medium text-gray-300 mb-2">
-              Fotos
-            </p>
-            <FotoUpload
-              fotos={encerrarForm.fotos}
-              onChange={(fotos) => setEncerrarForm({ ...encerrarForm, fotos })}
-              max={10}
-            />
+            <p className="text-sm font-medium text-gray-300 mb-2">Fotos</p>
+            <FotoUpload fotos={encerrarForm.fotos} onChange={(fotos) => setEncerrarForm({ ...encerrarForm, fotos })} max={10} />
           </div>
-
           <div className="flex gap-3 pt-2">
-            <Button variant="outline" className="flex-1" onClick={() => setModalEncerrar(false)}>
-              Cancelar
-            </Button>
-            <Button variant="danger" className="flex-1" onClick={handleEncerrar}>
-              Confirmar Encerramento
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Modal: Confirmar exclusão */}
-      <Modal aberto={modalExcluir} onFechar={() => setModalExcluir(false)} titulo="Excluir serviço">
-        <div className="space-y-4">
-          <div className="bg-red-900/30 border border-red-800 rounded-xl p-4 flex items-start gap-3">
-            <Trash2 size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-red-200">Esta ação não pode ser desfeita</p>
-              <p className="text-xs text-red-400 mt-1">
-                O serviço <span className="font-mono font-bold">{veiculo?.placa}</span> — {veiculo?.nomeVeiculo} será excluído permanentemente.
-              </p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-400">
-            Tem certeza que deseja excluir este serviço? Todos os dados associados serão removidos.
-          </p>
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" className="flex-1" onClick={() => setModalExcluir(false)} disabled={excluindo}>
-              Cancelar
-            </Button>
-            <Button variant="danger" className="flex-1" onClick={handleExcluir} loading={excluindo}>
-              <Trash2 size={15} />
-              Excluir serviço
-            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setModalEncerrar(false)}>Cancelar</Button>
+            <Button variant="danger" className="flex-1" onClick={handleEncerrar}>Confirmar Encerramento</Button>
           </div>
         </div>
       </Modal>

@@ -59,6 +59,29 @@ export async function orcamentosRoutes(app: FastifyInstance) {
     return reply.status(201).send(orcamento)
   })
 
+  app.patch('/:id', { preHandler: exigirRole('admin') }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = criarOrcamentoSchema.partial().safeParse(req.body)
+    if (!body.success) return reply.status(400).send({ erro: 'Dados inválidos' })
+
+    const orcamento = await prisma.orcamento.update({
+      where: { id },
+      data: body.data,
+    })
+    return orcamento
+  })
+
+  app.delete('/:id', { preHandler: exigirRole('admin') }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    // Desvincular veículos antes de deletar
+    await prisma.veiculo.updateMany({
+      where: { orcamentoId: id },
+      data: { orcamentoId: null },
+    })
+    await prisma.orcamento.delete({ where: { id } })
+    return { sucesso: true }
+  })
+
   app.patch('/:id/veiculo', { preHandler: exigirRole('admin') }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const { veiculoId } = req.body as { veiculoId: string }
