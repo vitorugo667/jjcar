@@ -7,9 +7,17 @@ const USER_KEY = 'jjcar_user'
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
   const data = await api.post<AuthResponse>('/auth/login', payload)
-  Cookies.set(TOKEN_KEY, data.token, { expires: 7 })
+  Cookies.set(TOKEN_KEY, data.token, {
+    expires: 7,
+    secure: typeof window !== 'undefined' && window.location.protocol === 'https:',
+    sameSite: 'strict',
+  })
   localStorage.setItem(USER_KEY, JSON.stringify(data.usuario))
   return data
+}
+
+export async function trocarSenha(senhaAtual: string, senhaNova: string): Promise<void> {
+  await api.patch('/auth/senha', { senhaAtual, senhaNova })
 }
 
 export function logout() {

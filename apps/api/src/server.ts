@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import multipart from '@fastify/multipart'
+import rateLimit from '@fastify/rate-limit'
 
 import { authRoutes } from './routes/auth'
 import { usuariosRoutes } from './routes/usuarios'
@@ -12,15 +13,38 @@ import { notificacoesRoutes } from './routes/notificacoes'
 import { uploadRoutes } from './routes/upload'
 import { backupRoutes } from './routes/backup'
 
+// ── Validação de segredo obrigatório ──────────────────────────────
+// Em produção, NUNCA usar um segredo padrão (qualquer um forjaria tokens de admin).
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('[FATAL] JWT_SECRET ausente ou fraco (mín. 32 caracteres). Configure no ambiente.')
+    process.exit(1)
+  }
+  console.warn('[AVISO] JWT_SECRET fraco — aceitável apenas em desenvolvimento.')
+}
+
 const app = Fastify({ logger: true })
 
+// CORS — aceita múltiplas origens separadas por vírgula
+const origensPermitidas = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim())
+
 app.register(cors, {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: origensPermitidas.length === 1 ? origensPermitidas[0] : origensPermitidas,
   credentials: true,
 })
 
+// Rate limiting global — protege contra abuso e força bruta
+app.register(rateLimit, {
+  global: false, // aplicado seletivamente por rota
+  max: 200,
+  timeWindow: '1 minute',
+})
+
 app.register(jwt, {
-  secret: process.env.JWT_SECRET || 'dev-secret-trocar-em-producao',
+  secret: JWT_SECRET || 'dev-secret-apenas-local-nao-usar-em-producao',
   sign: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
 })
 

@@ -108,6 +108,19 @@ export async function usuariosRoutes(app: FastifyInstance) {
       return reply.status(400).send({ erro: 'Dados inválidos' })
     }
 
+    // Proteção: não permitir rebaixar o último admin ativo
+    if (body.data.role && body.data.role !== 'admin') {
+      const alvo = await prisma.usuario.findUnique({ where: { id } })
+      if (alvo?.role === 'admin') {
+        const totalAdmins = await prisma.usuario.count({ where: { role: 'admin', ativo: true } })
+        if (totalAdmins <= 1) {
+          return reply.status(409).send({
+            erro: 'Não é possível rebaixar o último administrador ativo do sistema.',
+          })
+        }
+      }
+    }
+
     const dados: any = {}
     if (body.data.role) dados.role = body.data.role
     if (body.data.permissoes) {
@@ -125,6 +138,21 @@ export async function usuariosRoutes(app: FastifyInstance) {
   app.patch('/:id/ativar', { preHandler: exigirRole('admin') }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const { ativo } = req.body as { ativo: boolean }
+
+    // Proteção: não permitir desativar o último admin ativo, nem desativar a si mesmo
+    if (ativo === false) {
+      if (id === req.usuario.sub) {
+        return reply.status(409).send({ erro: 'Você não pode desativar a própria conta.' })
+      }
+      const alvo = await prisma.usuario.findUnique({ where: { id } })
+      if (alvo?.role === 'admin') {
+        const totalAdmins = await prisma.usuario.count({ where: { role: 'admin', ativo: true } })
+        if (totalAdmins <= 1) {
+          return reply.status(409).send({ erro: 'Não é possível desativar o último administrador ativo.' })
+        }
+      }
+    }
+
     const usuario = await prisma.usuario.update({ where: { id }, data: { ativo } })
     return formatarUsuario(usuario)
   })

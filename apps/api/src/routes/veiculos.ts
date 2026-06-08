@@ -247,6 +247,17 @@ export async function veiculosRoutes(app: FastifyInstance) {
 
   app.delete('/:id', { preHandler: exigirRole('admin') }, async (req, reply) => {
     const { id } = req.params as { id: string }
+    const veiculo = await prisma.veiculo.findUnique({ where: { id } })
+    if (!veiculo) return reply.status(404).send({ erro: 'Veículo não encontrado' })
+
+    // Não permitir cancelar veículo já encerrado (já gerou lançamento financeiro).
+    // Cancelar removeria o serviço da operação mas manteria a receita — inconsistência.
+    if (veiculo.status === 'encerrado') {
+      return reply.status(409).send({
+        erro: 'Veículo encerrado não pode ser cancelado, pois já possui lançamento financeiro. Para corrigir, ajuste a nota fiscal.',
+      })
+    }
+
     await prisma.veiculo.update({
       where: { id },
       data: { status: 'cancelado' },
